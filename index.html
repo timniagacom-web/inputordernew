@@ -1,0 +1,1386 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin d'talam - Order System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    .toast {
+      animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    
+    .modal-overlay {
+      animation: fadeIn 0.2s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .modal-content {
+      animation: slideUp 0.3s ease-out;
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .qty-btn {
+      transition: all 0.15s ease;
+    }
+    
+    .qty-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .product-card {
+      transition: all 0.2s ease;
+    }
+    
+    .product-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .chip {
+      transition: all 0.15s ease;
+    }
+    
+    .chip:hover {
+      transform: scale(1.02);
+    }
+    
+    .chip.active {
+      transform: scale(1.05);
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#FF7A00',
+            'primary-dark': '#E56E00',
+            'primary-light': '#FFF4EB',
+            success: '#22C55E',
+            'success-light': '#DCFCE7',
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com/3.4.17" type="text/javascript"></script>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-gray-100">
+  <div id="app" class="h-full w-full flex justify-center">
+   <div class="w-full max-w-[430px] bg-white h-full flex flex-col relative shadow-2xl"><!-- Header -->
+    <header class="sticky top-0 z-40 px-4 py-3 shadow-lg" style="background-color: #FF7A00;">
+     <div class="flex items-center justify-between">
+      <div>
+       <h1 id="store-name" class="text-xl font-bold" style="color: #ffffff;">Admin d'talam</h1>
+       <p id="tagline" class="text-xs font-medium" style="color: #ffffff;">Sistem Order Admin</p>
+      </div><button id="cart-btn" onclick="openCheckoutModal()" class="relative rounded-full p-3 transition-all" style="background-color: rgba(255, 255, 255, 0.2);" onmouseover="this.style.backgroundColor='rgba(255, 255, 255, 0.3)'" onmouseout="this.style.backgroundColor='rgba(255, 255, 255, 0.2)'">
+       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+       </svg><span id="cart-badge" class="absolute -top-1 -right-1 bg-white text-primary text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span> </button>
+     </div>
+    </header><!-- Main Content -->
+    <main class="flex-1 overflow-y-auto scrollbar-hide pb-4"><!-- Parser Section -->
+     <section class="p-4 border-b border-gray-100">
+      <div class="mb-2">
+       <h2 class="font-semibold text-gray-800 text-base">Paste Data Pesanan WhatsApp</h2>
+       <p class="text-xs text-gray-500 mt-1">Copy data dari WhatsApp customer dan paste di sini</p>
+      </div><textarea id="chat-input" class="w-full h-96 p-3 border-2 border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary-light outline-none transition-all resize-none" placeholder="Paste chat WhatsApp dari customer di sini..." oninput="parseChat()"></textarea>
+      <p class="text-xs text-gray-400 mt-2">💡 Data akan otomatis diproses saat Anda paste atau edit</p>
+     </section><!-- Biaya Section -->
+     <section class="p-4 border-b border-gray-100 bg-gray-50">
+      <h2 class="font-semibold text-gray-800 text-base mb-4">Biaya Lain</h2>
+      <div><label class="text-sm font-medium text-gray-700 mb-2 block">Ongkir <span class="text-red-500">*</span></label> <input type="number" id="ongkir" value="" min="0" placeholder="Masukkan nominal ongkir (Rp)" class="w-full p-3 border-2 border-gray-200 rounded-xl text-sm font-semibold focus:border-primary focus:ring-2 focus:ring-primary-light outline-none transition-all" oninput="updateTotals(); updateCheckoutButton()">
+       <p class="text-xs text-gray-400 mt-1">*Wajib diisi. Jika gratis ongkir, isi dengan 0</p>
+      </div>
+      <div class="mb-3"><label class="text-sm font-medium text-gray-700 mb-2 block">Biaya Tambahan (Opsional)</label> <input type="number" id="biaya-tambahan" value="0" min="0" placeholder="Nominal biaya tambahan" class="w-full p-3 border-2 border-gray-200 rounded-xl text-sm font-semibold focus:border-primary focus:ring-2 focus:ring-primary-light outline-none transition-all" oninput="updateTotals()">
+      </div>
+      <div><label class="text-sm font-medium text-gray-700 mb-2 block">Keterangan Biaya Tambahan</label> <input type="text" id="keterangan-biaya" value="" placeholder="Contoh: Biaya packing tambahan" class="w-full p-3 border-2 border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary-light outline-none transition-all" oninput="updateTotals()">
+      </div>
+      <div class="mb-3 mt-4"><label class="text-sm font-medium text-gray-700 mb-2 block">Diskon Tambahan (Opsional)</label> <input type="number" id="diskon-tambahan" value="0" min="0" placeholder="Nominal diskon" class="w-full p-3 border-2 border-gray-200 rounded-xl text-sm font-semibold focus:border-primary focus:ring-2 focus:ring-primary-light outline-none transition-all" oninput="updateTotals()">
+      </div>
+      <div><label class="text-sm font-medium text-gray-700 mb-2 block">Keterangan Diskon Tambahan</label> <input type="text" id="keterangan-diskon" value="" placeholder="Contoh: Promo spesial" class="w-full p-3 border-2 border-gray-200 rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary-light outline-none transition-all" oninput="updateTotals()">
+      </div>
+     </section><!-- Menu Section -->
+     <section class="p-4">
+      <div class="flex items-center gap-2 mb-4">
+       <div class="w-8 h-8 bg-primary-light rounded-full flex items-center justify-center">
+        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        </svg>
+       </div>
+       <h2 class="font-semibold text-gray-800">Menu Produk</h2>
+      </div>
+      <div id="product-list" class="space-y-3"><!-- Products will be rendered here -->
+      </div>
+     </section>
+    </main><!-- Sticky Footer -->
+    <footer class="sticky bottom-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+     <div class="space-y-1 mb-3 text-sm">
+      <div class="flex items-center justify-between"><span class="text-gray-600">Subtotal</span> <span id="subtotal-display" class="font-semibold text-gray-800">Rp 0</span>
+      </div>
+      <div class="flex items-center justify-between" id="ongkir-row"><span class="text-gray-600">Ongkir</span> <span id="ongkir-display" class="font-semibold text-gray-800">Rp 0</span>
+      </div>
+      <div class="flex items-center justify-between" id="biaya-row"><span id="biaya-label" class="text-gray-600">Biaya Lain</span> <span id="biaya-display" class="font-semibold text-gray-800">Rp 0</span>
+      </div>
+      <div class="flex items-center justify-between hidden" id="diskon-row"><span id="diskon-label" class="text-green-600">Diskon Tambahan</span> <span id="diskon-display" class="font-semibold text-green-600">- Rp 0</span>
+      </div>
+      <div class="flex items-center justify-between pt-2 border-t border-gray-200"><span class="text-gray-800 font-bold">Total</span> <span id="total-display" class="text-xl font-bold text-primary">Rp 0</span>
+      </div>
+      <p id="cs-helper-text" class="text-xs text-gray-500 mt-2">💡 Pilih Metode Pembayaran terlebih dahulu</p>
+     </div><button onclick="openCheckoutModal()" id="checkout-btn" class="w-full text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2" style="background-color: #cccccc; cursor: not-allowed;" disabled>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg> Lanjut ke Konfirmasi </button>
+    </footer>
+   </div>
+  </div><!-- Checkout Modal -->
+  <div id="checkout-modal" class="fixed inset-0 z-50 hidden">
+   <div class="modal-overlay absolute inset-0 bg-black/50" onclick="closeCheckoutModal()"></div>
+   <div id="modal-sheet" class="modal-content absolute bottom-0 left-0 right-0 max-w-[430px] mx-auto bg-white rounded-t-3xl max-h-[90%] overflow-y-auto scrollbar-hide touch-pan-y">
+    <div class="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100"><button onclick="closeCheckoutModal()" class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-all mb-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg><span class="text-sm font-medium">Kembali ke halaman utama</span> </button>
+     <h2 class="text-lg font-bold text-gray-800">Konfirmasi Order</h2>
+    </div>
+    <div class="p-4 space-y-4"><!-- Customer Info -->
+     <div class="bg-blue-50 border border-blue-200 rounded-xl p-3">
+      <h3 class="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
+       <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+       </svg> Info Customer</h3>
+      <div class="space-y-2 text-sm">
+       <div class="flex"><span class="w-16 text-blue-600">Nama</span> <span id="modal-nama" class="font-medium text-blue-900">-</span>
+       </div>
+       <div class="flex"><span class="w-16 text-blue-600">WA</span> <span id="modal-wa" class="font-medium text-blue-900">-</span>
+       </div>
+       <div class="flex"><span class="w-16 text-blue-600">Alamat</span> <span id="modal-alamat" class="font-medium text-blue-900 flex-1">-</span>
+       </div>
+      </div>
+      <p id="cs-helper-text" class="text-xs text-gray-500 mt-2">💡 Pilih Metode Pembayaran terlebih dahulu</p>
+     </div><!-- Order Summary -->
+     <div class="bg-gray-50 rounded-xl p-3">
+      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+       <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+       </svg> Ringkasan Pesanan</h3>
+      <div id="modal-items" class="space-y-2 text-sm"><!-- Items will be rendered here -->
+      </div>
+      <div class="border-t border-gray-200 mt-3 pt-3 space-y-1">
+       <div class="flex justify-between text-sm"><span class="text-gray-500">Subtotal</span> <span id="modal-subtotal" class="font-medium">Rp 0</span>
+       </div>
+       <div class="flex justify-between text-sm"><span class="text-gray-500">Ongkir</span> <span id="modal-ongkir" class="font-medium">Rp 0</span>
+       </div>
+       <div class="flex justify-between text-sm"><span id="modal-biaya-label" class="text-gray-500">Biaya Tambahan</span> <span id="modal-biaya" class="font-medium">Rp 0</span>
+       </div>
+       <div class="flex justify-between text-sm hidden" id="modal-diskon-row"><span id="modal-diskon-label" class="text-green-600">Diskon Tambahan</span> <span id="modal-diskon" class="font-medium text-green-600">- Rp 0</span>
+       </div>
+       <div class="flex justify-between text-base font-bold border-t border-gray-200 pt-2 mt-2"><span class="text-gray-800">TOTAL</span> <span id="modal-total" class="text-primary">Rp 0</span>
+       </div>
+      </div>
+      <p id="cs-helper-text" class="text-xs text-gray-500 mt-2">💡 Pilih Metode Pembayaran terlebih dahulu</p>
+     </div><!-- CS Selection -->
+     <div>
+      <h3 class="text-sm font-semibold text-gray-700 mb-2">Nama CS <span class="text-red-500">*</span></h3>
+      <div class="flex flex-wrap gap-2" id="cs-options"><button onclick="selectCS('Rina')" class="chip px-4 py-2 rounded-full border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent" data-cs="Rina" disabled>Rina</button> <button onclick="selectCS('Anggun')" class="chip px-4 py-2 rounded-full border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent" data-cs="Anggun" disabled>Anggun</button> <button onclick="selectCS('Winda')" class="chip px-4 py-2 rounded-full border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent" data-cs="Winda" disabled>Winda</button> <button onclick="selectCS('Lin')" class="chip px-4 py-2 rounded-full border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent" data-cs="Lin" disabled>Lin</button> <button onclick="selectCS('Norma')" class="chip px-4 py-2 rounded-full border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent" data-cs="Norma" disabled>Norma</button> <button onclick="selectCS('Yuni')" class="chip px-4 py-2 rounded-full border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent" data-cs="Yuni" disabled>Yuni</button> <button onclick="selectCS('dtalam')" class="chip px-4 py-2 rounded-full border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent" data-cs="dtalam" disabled>dtalam</button>
+      </div>
+      <p id="cs-helper-text" class="text-xs text-gray-500 mt-2">💡 Pilih Metode Pembayaran terlebih dahulu</p>
+     </div><!-- Payment Method -->
+     <div>
+      <h3 class="text-sm font-semibold text-gray-700 mb-2">Metode Pembayaran <span class="text-red-500">*</span></h3>
+      <div class="flex gap-2" id="payment-options"><button onclick="selectPayment('COD')" class="chip flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium hover:border-primary hover:bg-primary-light transition-all" data-payment="COD"><span class="block text-xl mb-1">🏠</span>COD</button> <button onclick="selectPayment('Transfer')" class="chip flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 text-sm font-medium hover:border-primary hover:bg-primary-light transition-all" data-payment="Transfer"><span class="block text-xl mb-1">💰</span>Transfer</button>
+      </div>
+      <p id="cs-helper-text" class="text-xs text-gray-500 mt-2">💡 Pilih Metode Pembayaran terlebih dahulu</p>
+     </div><!-- Payment Status -->
+     <div id="status-section" class="hidden">
+      <h3 class="text-sm font-semibold text-gray-700 mb-2">Status Pembayaran <span class="text-red-500">*</span></h3>
+      <div class="flex flex-wrap gap-2" id="status-options"><!-- Dynamic status options -->
+      </div>
+      <p id="cs-helper-text" class="text-xs text-gray-500 mt-2">💡 Pilih Metode Pembayaran terlebih dahulu</p>
+     </div><!-- Preview Message -->
+     <div>
+      <h3 class="text-sm font-semibold text-gray-700 mb-2 flex items-center justify-between"><span>📱 Preview Pesan ke Customer</span> <button onclick="copyMessage()" class="text-primary text-xs font-semibold flex items-center gap-1 hover:underline">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+        </svg> Salin </button></h3>
+      <div id="preview-message" class="bg-gray-900 text-green-400 p-3 rounded-xl text-xs font-mono whitespace-pre-wrap h-96 overflow-y-auto scrollbar-hide"><!-- Preview will be rendered here -->
+      </div>
+      <p id="cs-helper-text" class="text-xs text-gray-500 mt-2">💡 Pilih Metode Pembayaran terlebih dahulu</p>
+     </div><!-- Submit Button --> <button onclick="submitOrder()" id="submit-btn" class="w-full bg-success hover:bg-green-600 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+      </svg> Teruskan Data ke Customer </button>
+    </div>
+   </div>
+  </div><!-- Toast Container -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] space-y-2 max-w-[400px] w-full px-4"></div>
+  <script>
+    // Configuration
+    const defaultConfig = {
+      store_name: "Admin d'talam",
+      tagline: "Sistem Order Admin"
+    };
+    
+    let config = { ...defaultConfig };
+    
+    // Product Database
+    const products = [
+      {
+        id: 'kadoppe-durian',
+        name: 'Kadoppe DURIAN',
+        description: 'Kue dengan rasa durian premium',
+        price: 60000,
+        image: 'https://i.imgur.com/AQR0Dvd.jpeg',
+        aliases: ['kadoppe durian', 'kadoppe', 'kadope durian', 'kadope'],
+        group: 'kadoppe-durian'
+      },
+      {
+        id: 'sikaporo-durian',
+        name: 'Sikaporo Durian',
+        description: 'Sikaporo + Fla Durian',
+        price: 65000,
+        image: 'https://i.imgur.com/6LzrpjC.png',
+        aliases: ['sikaporo durian', 'sikaporo', 'fla durian', 'sikaporo fla'],
+        group: 'sikaporo-durian'
+      },
+      {
+        id: 'katirisala',
+        name: 'Katirisala',
+        description: 'Talam gula merah dan ketan hitam',
+        price: 65000,
+        image: 'https://i.imgur.com/4dGQSdq.jpeg',
+        aliases: ['katirisala', 'katiri sala', 'katiri', 'talam gula merah', 'ketan hitam', 'gula merah'],
+        group: 'katirisala'
+      },
+      {
+        id: 'talam-a',
+        name: '(Paket A) - Ketan Talam Durian',
+        description: 'Kue diproduksi sehari sebelumnya',
+        price: 60000,
+        image: 'https://i.imgur.com/lK4LXFy.jpeg',
+        aliases: ['talam a', 'paket a', 'ketan a', 'talam durian a', 'talam a'],
+        group: 'talam-a'
+      },
+      {
+        id: 'talam-b',
+        name: '(Paket B) - Ketan Talam Durian',
+        description: 'Kue diproduksi hari ini',
+        price: 60000,
+        image: 'https://i.imgur.com/lK4LXFy.jpeg',
+        aliases: ['talam b', 'paket b', 'ketan b', 'talam durian b', 'talam b'],
+        group: 'talam-b'
+      },
+      {
+        id: 'ube-lava',
+        name: 'Ube Lava - Gluten Free',
+        description: '1 box isi 6 cup',
+        price: 55000,
+        image: 'https://i.imgur.com/7FMKl8H.jpeg',
+        aliases: ['ube lava', 'ube', 'lava ube', 'lumpur surga ubi', 'lumpur ubi', 'lumpur surga ubi ungu', 'ube lava cake', 'ubelava'],
+        group: 'lava',
+        isChoco: false
+      },
+      {
+        id: 'pumpkin-lava',
+        name: 'Pumpkin Lava - Gluten Free',
+        description: '1 box isi 6 cup',
+        price: 55000,
+        image: 'https://i.imgur.com/7FMKl8H.jpeg',
+        aliases: ['pumpkin lava', 'pumpkin', 'lava pumpkin', 'labu', 'lumpur surga labu', 'lumpur labu', 'lumpur surga labu kuning', 'pumpkin lava cake', 'pumpkinlava'],
+        group: 'lava',
+        isChoco: false
+      },
+      {
+        id: 'choco-lava',
+        name: 'Choco Lava - Gluten Free',
+        description: '1 box isi 6 cup',
+        price: 58000,
+        image: 'https://i.imgur.com/7FMKl8H.jpeg',
+        aliases: ['choco lava', 'chocolate lava', 'coklat lava', 'lava coklat', 'choco', 'choco lava cake', 'chocolate lava cake', 'chocolava', 'chcolava'],
+        group: 'lava',
+        isChoco: true
+      },
+      {
+        id: 'spaghetti-personal',
+        name: 'Spaghetti Personal',
+        description: '1 cup - Porsi individual',
+        price: 37000,
+        image: 'https://i.imgur.com/pNBRs2l.png',
+        aliases: ['spaghetti personal', 'spageti personal', 'spaghetti 1', 'pasta personal', 'spagetti personal'],
+        group: 'spaghetti-personal'
+      },
+      {
+        id: 'spaghetti-bareng',
+        name: 'Spaghetti Porsi Bareng',
+        description: 'Porsi besar untuk sharing',
+        price: 95000,
+        image: 'https://i.imgur.com/TGly2IW.png',
+        aliases: ['spaghetti bareng', 'spageti bareng', 'spaghetti sharing', 'pasta bareng', 'spaghetti besar', 'spagetti bareng'],
+        group: 'spaghetti-bareng'
+      }
+    ];
+    
+    // Cart & State
+    let cart = {};
+    let customerData = {
+      nama: '',
+      alamat: '',
+      wa: '',
+      pembayaran: '',
+      status: '',
+      catatan: '',
+      maps: ''
+    };
+    let selectedCS = '';
+    let selectedPayment = '';
+    let selectedStatus = '';
+    
+    // Price calculation functions
+    function calculateKadoppeDurianPrice(qty) {
+      if (qty === 0) return 0;
+      if (qty === 1) return 60000;
+      if (qty === 2) return 99000;
+      if (qty >= 3) return qty * 49500;
+      return qty * 49500;
+    }
+    
+    function calculateSikaporoDurianPrice(qty) {
+      if (qty === 0) return 0;
+      if (qty === 1) return 65000;
+      if (qty === 2) return 114000;
+      if (qty >= 3) return qty * 57000;
+      return qty * 57000;
+    }
+    
+    function calculateKatirisalaPrice(qty) {
+      if (qty === 0) return 0;
+      if (qty === 1) return 65000;
+      if (qty >= 2) return qty * 58500;
+      return qty * 58500;
+    }
+    
+    function calculateTalamAPrice(qty) {
+      if (qty === 0) return 0;
+      if (qty === 1) return 60000;
+      if (qty === 2) return 99000;
+      if (qty === 3) return 148500;
+      if (qty === 4) return 198000;
+      if (qty >= 5) return qty * 49500;
+      return qty * 49500;
+    }
+    
+    function calculateTalamBPrice(qty) {
+      if (qty === 1) return 60000;
+      if (qty >= 2) return qty * 56500;
+      return qty * 56500;
+    }
+    
+    function calculateLavaPrice() {
+      const ubeQty = cart['ube-lava'] || 0;
+      const pumpkinQty = cart['pumpkin-lava'] || 0;
+      const chocoQty = cart['choco-lava'] || 0;
+      
+      const nonChocoQty = ubeQty + pumpkinQty;
+      const totalLava = nonChocoQty + chocoQty;
+      
+      if (totalLava === 0) return 0;
+      
+      // 3 or more: wholesale price
+      if (totalLava >= 3) {
+        return (nonChocoQty * 44500) + (chocoQty * 54500);
+      }
+      
+      // 2 items
+      if (totalLava === 2) {
+        if (chocoQty === 2) return 109000;
+        if (chocoQty === 1 && nonChocoQty === 1) return 99000;
+        if (nonChocoQty === 2) return 89000;
+      }
+      
+      // 1 item
+      if (totalLava === 1) {
+        if (chocoQty === 1) return 58000;
+        return 55000;
+      }
+      
+      return 0;
+    }
+    
+    function calculateSpaghettiPersonalPrice(qty) {
+      if (qty === 1) return 37000;
+      if (qty === 2) return 74000;
+      if (qty === 3) return 100000;
+      if (qty === 4) return 125000;
+      return qty * 31250;
+    }
+    
+    function calculateSubtotal() {
+      let subtotal = 0;
+      
+      const kadoppeDurianQty = cart['kadoppe-durian'] || 0;
+      const sikaporoDurianQty = cart['sikaporo-durian'] || 0;
+      const katirisalaQty = cart['katirisala'] || 0;
+      const talamAQty = cart['talam-a'] || 0;
+      const talamBQty = cart['talam-b'] || 0;
+      
+      // Calculate each product individually without bundling
+      if (kadoppeDurianQty > 0) subtotal += calculateKadoppeDurianPrice(kadoppeDurianQty);
+      if (sikaporoDurianQty > 0) subtotal += calculateSikaporoDurianPrice(sikaporoDurianQty);
+      if (katirisalaQty > 0) subtotal += calculateKatirisalaPrice(katirisalaQty);
+      if (talamAQty > 0) subtotal += calculateTalamAPrice(talamAQty);
+      if (talamBQty > 0) subtotal += calculateTalamBPrice(talamBQty);
+      
+      // Lava cakes (bundled)
+      subtotal += calculateLavaPrice();
+      
+      // Spaghetti Personal
+      const spaghettiPersonalQty = cart['spaghetti-personal'] || 0;
+      if (spaghettiPersonalQty > 0) subtotal += calculateSpaghettiPersonalPrice(spaghettiPersonalQty);
+      
+      // Spaghetti Bareng (fixed price)
+      const spaghettiBarengQty = cart['spaghetti-bareng'] || 0;
+      if (spaghettiBarengQty > 0) subtotal += spaghettiBarengQty * 95000;
+      
+      return subtotal;
+    }
+    
+    function getUnitPrice(productId, qty) {
+      if (qty === 0) return 0;
+      
+      switch(productId) {
+        case 'kadoppe-durian':
+          return Math.round(calculateKadoppeDurianPrice(qty) / qty);
+        case 'sikaporo-durian':
+          return Math.round(calculateSikaporoDurianPrice(qty) / qty);
+        case 'katirisala':
+          return Math.round(calculateKatirisalaPrice(qty) / qty);
+        case 'talam-a':
+          return Math.round(calculateTalamAPrice(qty) / qty);
+        case 'talam-b':
+          return Math.round(calculateTalamBPrice(qty) / qty);
+        case 'spaghetti-personal':
+          return Math.round(calculateSpaghettiPersonalPrice(qty) / qty);
+        case 'spaghetti-bareng':
+          return 95000;
+        case 'ube-lava':
+        case 'pumpkin-lava':
+        case 'choco-lava':
+          // For lava cakes, calculate based on total bundle
+          const totalLava = (cart['ube-lava'] || 0) + (cart['pumpkin-lava'] || 0) + (cart['choco-lava'] || 0);
+          if (totalLava >= 3) {
+            return productId === 'choco-lava' ? 54500 : 44500;
+          }
+          const totalPrice = calculateLavaPrice();
+          return Math.round(totalPrice / totalLava);
+        default:
+          return 0;
+      }
+    }
+    
+    // Render functions
+    function renderProducts() {
+      const container = document.getElementById('product-list');
+      container.innerHTML = products.map(product => {
+        const qty = cart[product.id] || 0;
+        const unitPrice = qty > 0 ? getUnitPrice(product.id, qty) : product.price;
+        const subtotal = unitPrice * qty;
+        const showSubtotal = qty > 0;
+        
+        return `
+        <div class="product-card bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="flex">
+            <div class="w-24 h-24 flex-shrink-0">
+              <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.background='linear-gradient(135deg, #FF7A00 0%, #E56E00 100%)'; this.alt='Gambar tidak tersedia';">
+            </div>
+            <div class="flex-1 p-3">
+              <h3 class="font-semibold text-gray-800 text-sm leading-tight">${product.name}</h3>
+              <p class="text-xs text-gray-500 mt-1">${product.description}</p>
+              <div class="flex items-center justify-between mt-2">
+                <div class="flex flex-col">
+                  <div>
+                    <span class="text-primary font-bold text-sm">${formatRupiah(unitPrice)}</span>
+                    <span class="text-gray-400 text-xs">/box</span>
+                  </div>
+                  ${showSubtotal ? `<span class="text-xs text-gray-600 mt-0.5">Subtotal: ${formatRupiah(subtotal)}</span>` : ''}
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="updateCart('${product.id}', -1)" class="qty-btn w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-600">−</button>
+                  <span id="qty-${product.id}" class="w-6 text-center font-semibold text-gray-800">${qty}</span>
+                  <button onclick="updateCart('${product.id}', 1)" class="qty-btn w-8 h-8 rounded-full flex items-center justify-center font-bold text-white" style="background-color: #FF7A00;">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        `;
+      }).join('');
+    }
+    
+    function updateCart(productId, delta) {
+      const currentQty = cart[productId] || 0;
+      const newQty = Math.max(0, currentQty + delta);
+      
+      if (newQty === 0) {
+        delete cart[productId];
+      } else {
+        cart[productId] = newQty;
+      }
+      
+      document.getElementById(`qty-${productId}`).textContent = newQty;
+      renderProducts();
+      updateTotals();
+    }
+    
+    function updateTotals() {
+      const subtotal = calculateSubtotal();
+      const ongkirValue = document.getElementById('ongkir').value;
+      const ongkir = ongkirValue === '' ? 0 : parseInt(ongkirValue) || 0;
+      const biaya = parseInt(document.getElementById('biaya-tambahan').value) || 0;
+      const keteranganBiaya = document.getElementById('keterangan-biaya').value.trim();
+      const diskon = parseInt(document.getElementById('diskon-tambahan').value) || 0;
+      const keteranganDiskon = document.getElementById('keterangan-diskon').value.trim();
+      const total = subtotal + ongkir + biaya - diskon;
+      
+      document.getElementById('subtotal-display').textContent = formatRupiah(subtotal);
+      document.getElementById('ongkir-display').textContent = formatRupiah(ongkir);
+      document.getElementById('biaya-display').textContent = formatRupiah(biaya);
+      document.getElementById('diskon-display').textContent = '- ' + formatRupiah(diskon);
+      document.getElementById('total-display').textContent = formatRupiah(total);
+      
+      // Always show biaya row, update label with keterangan
+      const biayaRow = document.getElementById('biaya-row');
+      const biayaLabel = document.getElementById('biaya-label');
+      biayaRow.classList.remove('hidden');
+      
+      if (keteranganBiaya) {
+        biayaLabel.textContent = keteranganBiaya;
+      } else {
+        biayaLabel.textContent = 'Biaya Lain';
+      }
+      
+      // Show diskon row only if there's a value
+      const diskonRow = document.getElementById('diskon-row');
+      const diskonLabel = document.getElementById('diskon-label');
+      
+      if (diskon > 0) {
+        diskonRow.classList.remove('hidden');
+        if (keteranganDiskon) {
+          diskonLabel.textContent = keteranganDiskon;
+        } else {
+          diskonLabel.textContent = 'Diskon Tambahan';
+        }
+      } else {
+        diskonRow.classList.add('hidden');
+      }
+      
+      const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+      const cartBadge = document.getElementById('cart-badge');
+      const checkoutBtn = document.getElementById('checkout-btn');
+      
+      if (totalItems > 0) {
+        cartBadge.textContent = totalItems;
+        cartBadge.classList.remove('hidden');
+      } else {
+        cartBadge.classList.add('hidden');
+      }
+      
+      updateCheckoutButton();
+    }
+    
+    function updateCheckoutButton() {
+      const checkoutBtn = document.getElementById('checkout-btn');
+      const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+      const ongkirValue = document.getElementById('ongkir').value;
+      
+      // Button is enabled only if there are items AND ongkir is filled
+      if (totalItems > 0 && ongkirValue !== '') {
+        checkoutBtn.disabled = false;
+        checkoutBtn.style.backgroundColor = '#FF7A00';
+        checkoutBtn.style.cursor = 'pointer';
+      } else {
+        checkoutBtn.disabled = true;
+        checkoutBtn.style.backgroundColor = '#cccccc';
+        checkoutBtn.style.cursor = 'not-allowed';
+      }
+    }
+    
+    function formatRupiah(amount) {
+      return 'Rp ' + amount.toLocaleString('id-ID');
+    }
+    
+    // Parser functions
+    let parseDebounce = null;
+    
+    function parseChat() {
+      // Debounce to prevent toast spam
+      clearTimeout(parseDebounce);
+      parseDebounce = setTimeout(() => {
+        performParse();
+      }, 500);
+    }
+    
+    function performParse() {
+      const chatText = document.getElementById('chat-input').value;
+      if (!chatText.trim()) {
+        return;
+      }
+      
+      // Reset cart first
+      cart = {};
+      
+      // Parse nama
+      const namaMatch = chatText.match(/nama\s*[:\-]\s*(.+?)(?=\n|alamat|no[\.\s]*hp|no[\.\s]*wa|pesanan|pembayaran|$)/i);
+      customerData.nama = namaMatch ? namaMatch[1].trim() : '';
+      
+      // Parse alamat (improved to stop before No WA/HP)
+      const alamatMatch = chatText.match(/alamat\s*[:\-]\s*([\s\S]+?)(?=\n\s*(?:no[\.\s]*hp|no[\.\s]*wa|hp|wa|whatsapp|telepon|telp|pesanan|pembayaran|ongkir|status)|$)/i);
+      if (alamatMatch) {
+        let alamat = alamatMatch[1].trim();
+        // Remove any phone number labels that might have been captured
+        alamat = alamat.replace(/\n?\s*(?:no[\.\s]*hp|no[\.\s]*wa|hp|wa|whatsapp|telepon|telp)\s*[:\-]?\s*[0-9\s\-\+]*/gi, '');
+        // Clean up multiple commas and trailing commas
+        alamat = alamat.replace(/\n+/g, ', ').replace(/,\s*,/g, ',').replace(/,\s*$/, '');
+        customerData.alamat = alamat;
+      } else {
+        customerData.alamat = '';
+      }
+      
+      // Parse no HP/WA (super smart pattern)
+      // Pattern 1: Look for phone number after "No. WA:" or similar labels
+      let waMatch = chatText.match(/(?:no[\.\s]*hp|no[\.\s]*wa|hp|wa|whatsapp|telepon|telp)\s*[:\-]?\s*([0-9\s\-\+\.]{10,20})/i);
+      
+      if (waMatch) {
+        let phone = waMatch[1].trim();
+        // Remove spaces, dashes, dots, and plus signs
+        phone = phone.replace(/[\s\-\.\+]/g, '');
+        
+        // Only process if we have at least 10 digits
+        if (phone.length >= 10 && /^\d+$/.test(phone)) {
+          // Convert to international format
+          if (phone.startsWith('0')) {
+            phone = '+62' + phone.substring(1);
+          } else if (phone.startsWith('62')) {
+            phone = '+' + phone;
+          } else if (!phone.startsWith('+')) {
+            phone = '+62' + phone;
+          }
+          customerData.wa = phone;
+        } else {
+          customerData.wa = '';
+        }
+      } else {
+        customerData.wa = '';
+      }
+      
+      // Pattern 2: If pattern 1 failed or resulted in empty, try line-by-line search
+      if (!customerData.wa) {
+        const lines = chatText.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].toLowerCase();
+          // Check if this line contains WA label
+          if (/(?:no[\.\s]*hp|no[\.\s]*wa|hp|wa|whatsapp)/.test(line)) {
+            // Try to find number on same line
+            let numberMatch = lines[i].match(/([0-9\s\-\+\.]{10,20})/);
+            
+            // If not found on same line, check next line
+            if (!numberMatch && i + 1 < lines.length) {
+              numberMatch = lines[i + 1].match(/([0-9\s\-\+\.]{10,20})/);
+            }
+            
+            if (numberMatch) {
+              let phone = numberMatch[1].trim();
+              // Clean the phone number
+              phone = phone.replace(/[\s\-\.\+]/g, '');
+              
+              // Validate it's a proper phone number (10-15 digits)
+              if (phone.length >= 10 && phone.length <= 15 && /^\d+$/.test(phone)) {
+                // Convert to international format
+                if (phone.startsWith('0')) {
+                  phone = '+62' + phone.substring(1);
+                } else if (phone.startsWith('62')) {
+                  phone = '+' + phone;
+                } else if (!phone.startsWith('+')) {
+                  phone = '+62' + phone;
+                }
+                customerData.wa = phone;
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      // Parse ongkir
+      const ongkirMatch = chatText.match(/ongkir\s*[:\-]?\s*(?:rp\.?\s*)?([0-9.,]+)/i);
+      if (ongkirMatch) {
+        const ongkirValue = parseInt(ongkirMatch[1].replace(/[.,]/g, ''));
+        document.getElementById('ongkir').value = ongkirValue;
+      }
+      
+      // Parse pembayaran (check this before status to avoid conflicts)
+      if (/\btransfer\b/i.test(chatText)) {
+        customerData.pembayaran = 'Transfer';
+      } else if (/\bcod\b/i.test(chatText)) {
+        customerData.pembayaran = 'COD';
+      } else {
+        customerData.pembayaran = '';
+      }
+      
+      // Parse status (more specific patterns first)
+      // Look for the "Lunas/Belum:" line specifically to check if it has a value
+      const lunasBelumMatch = chatText.match(/lunas\s*\/\s*belum\s*[:\-]?\s*(.+?)(?=\n|$)/i);
+      
+      if (lunasBelumMatch && lunasBelumMatch[1].trim() !== '') {
+        const statusText = lunasBelumMatch[1].trim().toLowerCase();
+        
+        if (/lunas\s*bsi/i.test(statusText)) {
+          customerData.status = 'Lunas BSI';
+        } else if (/lunas\s*mandiri/i.test(statusText)) {
+          customerData.status = 'Lunas Mandiri';
+        } else if (/lunas\s*qris/i.test(statusText)) {
+          customerData.status = 'Lunas QRIS';
+        } else if (/belum\s*lunas/i.test(statusText)) {
+          customerData.status = 'Belum Lunas';
+        } else if (/^lunas$/i.test(statusText)) {
+          customerData.status = 'Lunas';
+        } else if (/^belum$/i.test(statusText)) {
+          customerData.status = 'Belum';
+        } else {
+          customerData.status = '';
+        }
+      } else {
+        // If "Lunas/Belum:" line is empty or not found, leave status empty
+        customerData.status = '';
+      }
+      
+      // Parse CS
+      const csMatch = chatText.match(/cs\s*[:\-]?\s*(rina|anggun|winda|lin|norma|yuni|dtalam)/i);
+      if (csMatch) {
+        selectedCS = csMatch[1].charAt(0).toUpperCase() + csMatch[1].slice(1).toLowerCase();
+      } else {
+        selectedCS = '';
+      }
+      
+      // Parse Catatan
+      const catatanMatch = chatText.match(/catatan\s*[:\-]?\s*([\s\S]+?)(?=\n\s*(?:cs|maps|$))/i);
+      customerData.catatan = catatanMatch ? catatanMatch[1].trim() : '';
+      
+      // Parse Maps
+      const mapsMatch = chatText.match(/maps\s*[:\-]?\s*(.+?)(?=\n|$)/i);
+      customerData.maps = mapsMatch ? mapsMatch[1].trim() : '';
+      
+      // Enhanced Parser - scan entire text for products
+      const textLower = chatText.toLowerCase();
+      const lines = textLower.split('\n');
+      
+      products.forEach(product => {
+        product.aliases.forEach(alias => {
+          const aliasEscaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          
+          // Pattern 1: Number before name (2 talam a, 2x talam a, • 2 talam a)
+          const pattern1 = new RegExp(`[•\\-\\*]?\\s*(\\d+)\\s*(?:x|box|pcs|buah|porsi)?\\s*${aliasEscaped}`, 'gi');
+          
+          // Pattern 2: Number after name (talam a 2, talam a: 2, talam a - 2)
+          const pattern2 = new RegExp(`${aliasEscaped}\\s*[:\\-]?\\s*(\\d+)`, 'gi');
+          
+          // Pattern 3: Product name on one line, number on next line
+          lines.forEach((line, idx) => {
+            if (line.includes(alias) && idx + 1 < lines.length) {
+              const nextLine = lines[idx + 1];
+              const numMatch = nextLine.match(/^\s*[•\-\*]?\s*(\d+)/);
+              if (numMatch) {
+                cart[product.id] = (cart[product.id] || 0) + parseInt(numMatch[1]);
+              }
+            }
+          });
+          
+          // Try pattern 1
+          let match = textLower.match(pattern1);
+          if (match) {
+            match.forEach(m => {
+              const qtyMatch = m.match(/(\d+)/);
+              if (qtyMatch) {
+                cart[product.id] = (cart[product.id] || 0) + parseInt(qtyMatch[1]);
+              }
+            });
+          }
+          
+          // Try pattern 2
+          match = textLower.match(pattern2);
+          if (match) {
+            match.forEach(m => {
+              const qtyMatch = m.match(/(\d+)/);
+              if (qtyMatch) {
+                cart[product.id] = (cart[product.id] || 0) + parseInt(qtyMatch[1]);
+              }
+            });
+          }
+        });
+      });
+      
+      // Update UI
+      renderProducts();
+      updateTotals();
+    }
+    
+    // Modal functions
+    function openCheckoutModal() {
+      const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+      if (totalItems === 0) {
+        showToast('Keranjang masih kosong', 'error');
+        return;
+      }
+      
+      // Validate ongkir
+      const ongkirValue = document.getElementById('ongkir').value;
+      if (ongkirValue === '') {
+        showToast('Mohon mengisi nominal ongkir terlebih dahulu!', 'error');
+        return;
+      }
+      
+      // Update customer info
+      document.getElementById('modal-nama').textContent = customerData.nama || '-';
+      document.getElementById('modal-wa').textContent = customerData.wa || '-';
+      document.getElementById('modal-alamat').textContent = customerData.alamat || '-';
+      
+      // Update items
+      const modalItems = document.getElementById('modal-items');
+      let itemsHtml = '';
+      
+      Object.entries(cart).forEach(([productId, qty]) => {
+        if (qty > 0) {
+          const product = products.find(p => p.id === productId);
+          const unitPrice = getUnitPrice(productId, qty);
+          const totalPrice = unitPrice * qty;
+          
+          // Extract product name properly
+          let displayName = product.name;
+          // If name contains parentheses, take the part in parentheses + the part after
+          if (product.name.includes('(') && product.name.includes(')')) {
+            displayName = product.name; // Keep full name for products with package info
+          }
+          
+          itemsHtml += `
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="font-medium text-gray-800">${displayName}</span>
+                <span class="text-gray-500 text-xs block">${qty} x ${formatRupiah(unitPrice)}</span>
+              </div>
+              <span class="font-semibold text-gray-800">${formatRupiah(totalPrice)}</span>
+            </div>
+          `;
+        }
+      });
+      
+      modalItems.innerHTML = itemsHtml;
+      
+      // Update totals
+      const subtotal = calculateSubtotal();
+      const ongkir = parseInt(document.getElementById('ongkir').value) || 0;
+      const biaya = parseInt(document.getElementById('biaya-tambahan').value) || 0;
+      const keteranganBiaya = document.getElementById('keterangan-biaya').value.trim();
+      const diskon = parseInt(document.getElementById('diskon-tambahan').value) || 0;
+      const keteranganDiskon = document.getElementById('keterangan-diskon').value.trim();
+      const total = subtotal + ongkir + biaya - diskon;
+      
+      document.getElementById('modal-subtotal').textContent = formatRupiah(subtotal);
+      document.getElementById('modal-ongkir').textContent = formatRupiah(ongkir);
+      document.getElementById('modal-biaya').textContent = formatRupiah(biaya);
+      document.getElementById('modal-diskon').textContent = '- ' + formatRupiah(diskon);
+      document.getElementById('modal-total').textContent = formatRupiah(total);
+      
+      // Update biaya label in modal
+      const modalBiayaLabel = document.getElementById('modal-biaya-label');
+      if (keteranganBiaya) {
+        modalBiayaLabel.textContent = keteranganBiaya;
+      } else {
+        modalBiayaLabel.textContent = 'Biaya Tambahan';
+      }
+      
+      // Update diskon label in modal and show/hide
+      const modalDiskonRow = document.getElementById('modal-diskon-row');
+      const modalDiskonLabel = document.getElementById('modal-diskon-label');
+      
+      if (diskon > 0) {
+        modalDiskonRow.classList.remove('hidden');
+        if (keteranganDiskon) {
+          modalDiskonLabel.textContent = keteranganDiskon;
+        } else {
+          modalDiskonLabel.textContent = 'Diskon Tambahan';
+        }
+      } else {
+        modalDiskonRow.classList.add('hidden');
+      }
+      
+      // Pre-select payment if parsed
+      if (customerData.pembayaran) {
+        selectPayment(customerData.pembayaran);
+      }
+      
+      // Pre-select CS if parsed
+      if (selectedCS) {
+        document.querySelectorAll('#cs-options button').forEach(btn => {
+          if (btn.dataset.cs === selectedCS) {
+            btn.style.backgroundColor = '#FF7A00';
+            btn.style.color = 'white';
+            btn.style.borderColor = '#FF7A00';
+            btn.classList.add('active');
+            btn.classList.remove('border-gray-200', 'text-gray-700');
+          } else {
+            btn.style.backgroundColor = 'transparent';
+            btn.style.color = '#374151';
+            btn.style.borderColor = '#e5e7eb';
+            btn.classList.remove('active');
+            btn.classList.add('border-gray-200', 'text-gray-700');
+          }
+        });
+      }
+      
+      // Update preview
+      updatePreview();
+      
+      document.getElementById('checkout-modal').classList.remove('hidden');
+    }
+    
+    function closeCheckoutModal() {
+      document.getElementById('checkout-modal').classList.add('hidden');
+    }
+    
+    function selectCS(cs) {
+      selectedCS = cs;
+      document.querySelectorAll('#cs-options button').forEach(btn => {
+        if (btn.dataset.cs === cs) {
+          btn.style.backgroundColor = '#FF7A00';
+          btn.style.color = 'white';
+          btn.style.borderColor = '#FF7A00';
+          btn.classList.add('active');
+          btn.classList.remove('border-gray-200', 'text-gray-700');
+        } else {
+          btn.style.backgroundColor = 'transparent';
+          btn.style.color = '#374151';
+          btn.style.borderColor = '#e5e7eb';
+          btn.classList.remove('active');
+          btn.classList.add('border-gray-200', 'text-gray-700');
+        }
+      });
+      updatePreview();
+      updateSubmitButtonState();
+    }
+    
+    function selectPayment(payment) {
+      selectedPayment = payment;
+      selectedStatus = '';
+      
+      document.querySelectorAll('#payment-options button').forEach(btn => {
+        if (btn.dataset.payment === payment) {
+          btn.style.backgroundColor = '#FF7A00';
+          btn.style.color = 'white';
+          btn.style.borderColor = '#FF7A00';
+          btn.classList.add('active');
+          btn.classList.remove('border-gray-200', 'text-gray-700');
+        } else {
+          btn.style.backgroundColor = 'transparent';
+          btn.style.color = '#374151';
+          btn.style.borderColor = '#e5e7eb';
+          btn.classList.remove('active');
+          btn.classList.add('border-gray-200', 'text-gray-700');
+        }
+      });
+      
+      // Show status options
+      const statusSection = document.getElementById('status-section');
+      const statusOptions = document.getElementById('status-options');
+      
+      statusSection.classList.remove('hidden');
+      
+      if (payment === 'Transfer') {
+        statusOptions.innerHTML = `
+          <button onclick="selectStatus('Belum Lunas')" class="chip px-3 py-2 rounded-full border-2 border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all" data-status="Belum Lunas">Belum Lunas</button>
+          <button onclick="selectStatus('Lunas BSI')" class="chip px-3 py-2 rounded-full border-2 border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all" data-status="Lunas BSI">Lunas BSI</button>
+          <button onclick="selectStatus('Lunas Mandiri')" class="chip px-3 py-2 rounded-full border-2 border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all" data-status="Lunas Mandiri">Lunas Mandiri</button>
+          <button onclick="selectStatus('Lunas QRIS')" class="chip px-3 py-2 rounded-full border-2 border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all" data-status="Lunas QRIS">Lunas QRIS</button>
+        `;
+      } else {
+        statusOptions.innerHTML = `
+          <button onclick="selectStatus('Belum')" class="chip px-4 py-2 rounded-full border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all" data-status="Belum">Belum</button>
+          <button onclick="selectStatus('Lunas')" class="chip px-4 py-2 rounded-full border-2 border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:bg-primary-light transition-all" data-status="Lunas">Lunas</button>
+        `;
+      }
+      
+      // Auto-select status if parsed
+      if (customerData.status) {
+        setTimeout(() => selectStatus(customerData.status), 100);
+      }
+      
+      // Enable CS section after payment selected
+      enableCSButtons();
+      
+      updatePreview();
+    }
+    
+    function enableCSButtons() {
+      const csButtons = document.querySelectorAll('#cs-options button');
+      const csHelperText = document.getElementById('cs-helper-text');
+      
+      csButtons.forEach(btn => {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+      });
+      
+      csHelperText.textContent = '👇 Pilih salah satu CS di bawah';
+    }
+    
+    function disableCSButtons() {
+      const csButtons = document.querySelectorAll('#cs-options button');
+      const csHelperText = document.getElementById('cs-helper-text');
+      
+      csButtons.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+      });
+      
+      csHelperText.textContent = '💡 Pilih Metode Pembayaran terlebih dahulu';
+      selectedCS = '';
+    }
+    
+    function selectStatus(status) {
+      selectedStatus = status;
+      
+      document.querySelectorAll('#status-options button').forEach(btn => {
+        if (btn.dataset.status === status) {
+          btn.style.backgroundColor = '#FF7A00';
+          btn.style.color = 'white';
+          btn.style.borderColor = '#FF7A00';
+          btn.classList.add('active');
+          btn.classList.remove('border-gray-200', 'text-gray-700');
+        } else {
+          btn.style.backgroundColor = 'transparent';
+          btn.style.color = '#374151';
+          btn.style.borderColor = '#e5e7eb';
+          btn.classList.remove('active', 'border-success', 'bg-success-light', 'text-success', 'bg-primary-light');
+          btn.classList.add('border-gray-200', 'text-gray-700');
+        }
+      });
+      
+      updatePreview();
+      updateSubmitButtonState();
+    }
+    
+    function updatePreview() {
+      const subtotal = calculateSubtotal();
+      const ongkir = parseInt(document.getElementById('ongkir').value) || 0;
+      const biaya = parseInt(document.getElementById('biaya-tambahan').value) || 0;
+      const keteranganBiaya = document.getElementById('keterangan-biaya').value.trim();
+      const diskon = parseInt(document.getElementById('diskon-tambahan').value) || 0;
+      const keteranganDiskon = document.getElementById('keterangan-diskon').value.trim();
+      const total = subtotal + ongkir + biaya - diskon;
+      
+      // Build product lines
+      let productLines = [];
+      
+      // Kadoppe Durian
+      const kadoppeDurianQty = cart['kadoppe-durian'] || 0;
+      if (kadoppeDurianQty > 0) {
+        const price = calculateKadoppeDurianPrice(kadoppeDurianQty);
+        productLines.push(`- Kadoppe Durian: ${kadoppeDurianQty}`);
+        productLines.push(`Harga: ${formatRupiah(price)}`);
+      }
+      
+      // Sikaporo Durian
+      const sikaporoDurianQty = cart['sikaporo-durian'] || 0;
+      if (sikaporoDurianQty > 0) {
+        const price = calculateSikaporoDurianPrice(sikaporoDurianQty);
+        productLines.push(`- Sikaporo Durian: ${sikaporoDurianQty}`);
+        productLines.push(`Harga: ${formatRupiah(price)}`);
+      }
+      
+      // Katirisala
+      const katirisalaQty = cart['katirisala'] || 0;
+      if (katirisalaQty > 0) {
+        const price = calculateKatirisalaPrice(katirisalaQty);
+        productLines.push(`- Katirisala: ${katirisalaQty}`);
+        productLines.push(`Harga: ${formatRupiah(price)}`);
+      }
+      
+      // Talam Durian Paket A
+      const talamAQty = cart['talam-a'] || 0;
+      if (talamAQty > 0) {
+        const price = calculateTalamAPrice(talamAQty);
+        productLines.push(`- Talam Durian Paket A: ${talamAQty}`);
+        productLines.push(`Harga: ${formatRupiah(price)}`);
+      }
+      
+      // Talam Durian Paket B
+      const talamBQty = cart['talam-b'] || 0;
+      if (talamBQty > 0) {
+        const price = calculateTalamBPrice(talamBQty);
+        productLines.push(`- Talam Durian Paket B: ${talamBQty}`);
+        productLines.push(`Harga: ${formatRupiah(price)}`);
+      }
+      
+      // Lumpur Surga Ubi
+      const ubeQty = cart['ube-lava'] || 0;
+      if (ubeQty > 0) {
+        const unitPrice = getUnitPrice('ube-lava', ubeQty);
+        productLines.push(`- Lumpur Surga Ubi: ${ubeQty}`);
+        productLines.push(`Harga: ${formatRupiah(unitPrice * ubeQty)}`);
+      }
+      
+      // Lumpur Surga Labu
+      const pumpkinQty = cart['pumpkin-lava'] || 0;
+      if (pumpkinQty > 0) {
+        const unitPrice = getUnitPrice('pumpkin-lava', pumpkinQty);
+        productLines.push(`- Lumpur Surga Labu: ${pumpkinQty}`);
+        productLines.push(`Harga: ${formatRupiah(unitPrice * pumpkinQty)}`);
+      }
+      
+      // Chocolate Lava
+      const chocoQty = cart['choco-lava'] || 0;
+      if (chocoQty > 0) {
+        const unitPrice = getUnitPrice('choco-lava', chocoQty);
+        productLines.push(`- Chocolate Lava: ${chocoQty}`);
+        productLines.push(`Harga: ${formatRupiah(unitPrice * chocoQty)}`);
+      }
+      
+      // Spaghetti Personal
+      const spaghettiPersonalQty = cart['spaghetti-personal'] || 0;
+      if (spaghettiPersonalQty > 0) {
+        const price = calculateSpaghettiPersonalPrice(spaghettiPersonalQty);
+        productLines.push(`- Spaghetti Personal: ${spaghettiPersonalQty}`);
+        productLines.push(`Harga: ${formatRupiah(price)}`);
+      }
+      
+      // Spaghetti Bareng
+      const spaghettiBarengQty = cart['spaghetti-bareng'] || 0;
+      if (spaghettiBarengQty > 0) {
+        const price = spaghettiBarengQty * 95000;
+        productLines.push(`- Spaghetti Bareng: ${spaghettiBarengQty}`);
+        productLines.push(`Harga: ${formatRupiah(price)}`);
+      }
+      
+      const productSection = productLines.length > 0 ? 
+        `Jumlah Produk yang dipesan:\n${productLines.join('\n')}\n\n` : '';
+      
+      const biayaTambahanLine = biaya > 0 ? 
+        `${keteranganBiaya || 'Biaya Tambahan'}: ${formatRupiah(biaya)}\n` : '';
+      
+      const diskonLine = diskon > 0 ?
+        `${keteranganDiskon || 'Diskon Tambahan'}: - ${formatRupiah(diskon)}\n` : '';
+      
+      const message = `*FORM ORDER*
+================
+Nama: ${customerData.nama || '-'}
+Alamat: ${customerData.alamat || '-'}
+No. WA: ${customerData.wa || '-'}
+Pembayaran: ${selectedPayment || '-'}
+Lunas/Belum: ${selectedStatus || '-'}
+${productSection}Ongkir: ${formatRupiah(ongkir)}
+${biayaTambahanLine}${diskonLine}Total Harga: ${formatRupiah(total)}
+Catatan: ${customerData.catatan || '-'}
+CS: ${selectedCS || '-'}
+Maps: ${customerData.maps || '-'}`;
+      
+      document.getElementById('preview-message').textContent = message;
+    }
+    
+    function copyMessage() {
+      const message = document.getElementById('preview-message').textContent;
+      
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(message).then(() => {
+          showToast('Pesan berhasil disalin!', 'success');
+        }).catch((err) => {
+          console.error('Clipboard API gagal:', err);
+          // Fallback to textarea method
+          fallbackCopyToClipboard(message);
+        });
+      } else {
+        // Use fallback method
+        fallbackCopyToClipboard(message);
+      }
+    }
+    
+    function fallbackCopyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.width = '1px';
+      textarea.style.height = '1px';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          showToast('Pesan berhasil disalin!', 'success');
+        } else {
+          showToast('Gagal menyalin pesan', 'error');
+        }
+      } catch (err) {
+        console.error('Fallback copy gagal:', err);
+        showToast('Gagal menyalin pesan', 'error');
+      }
+      
+      document.body.removeChild(textarea);
+    }
+    
+    function submitOrder() {
+      // Validation
+      const ongkir = parseInt(document.getElementById('ongkir').value);
+      
+      // Check for incomplete data
+      let missingData = [];
+      
+      if (!selectedCS) {
+        missingData.push('Nama CS belum dipilih');
+      }
+      
+      if (!selectedPayment) {
+        missingData.push('Metode Pembayaran belum dipilih');
+      } else {
+        // If payment method selected, check if status is also selected
+        if (!selectedStatus) {
+          if (selectedPayment === 'Transfer') {
+            missingData.push('Status Pembayaran Transfer belum dipilih (Belum Lunas / Lunas BSI / Lunas Mandiri / Lunas QRIS)');
+          } else if (selectedPayment === 'COD') {
+            missingData.push('Status Pembayaran COD belum dipilih (Belum / Lunas)');
+          }
+        }
+      }
+      
+      if (!customerData.wa) {
+        missingData.push('Nomor WA Customer belum tersedia');
+      }
+      
+      if (missingData.length > 0) {
+        const message = `⚠️ DATA BELUM LENGKAP!\n\nMohon lengkapi data berikut:\n\n${missingData.map((item, idx) => `${idx + 1}. ${item}`).join('\n')}`;
+        showToast(message, 'error');
+        return;
+      }
+      
+      const message = document.getElementById('preview-message').textContent;
+      const phone = customerData.wa.replace('+', '');
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      
+      window.open(url, '_blank');
+      showToast('Membuka WhatsApp...', 'success');
+    }
+    
+    function updateSubmitButtonState() {
+      const submitBtn = document.getElementById('submit-btn');
+      
+      // Check if all required fields are filled
+      const hasCS = selectedCS !== '';
+      const hasPayment = selectedPayment !== '';
+      const hasStatus = selectedStatus !== '';
+      const hasWA = customerData.wa !== '';
+      
+      const isComplete = hasCS && hasPayment && hasStatus && hasWA;
+      
+      if (isComplete) {
+        submitBtn.style.backgroundColor = '#22C55E';
+        submitBtn.style.cursor = 'pointer';
+        submitBtn.disabled = false;
+      } else {
+        submitBtn.style.backgroundColor = '#999999';
+        submitBtn.style.cursor = 'not-allowed';
+        submitBtn.disabled = true;
+      }
+    }
+    
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const bgColor = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-red-500' : 'bg-gray-800';
+      const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+      
+      // Handle multi-line messages
+      const messageHtml = message.replace(/\n/g, '<br>');
+      
+      toast.className = `toast ${bgColor} text-white px-4 py-3 rounded-xl shadow-lg flex items-start gap-2`;
+      toast.innerHTML = `
+        <span class="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">${icon}</span>
+        <span class="text-sm font-medium">${messageHtml}</span>
+      `;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 4000);
+    }
+    
+    // Element SDK Integration
+    function onConfigChange(newConfig) {
+      config = { ...defaultConfig, ...newConfig };
+      
+      document.getElementById('store-name').textContent = config.store_name || defaultConfig.store_name;
+      document.getElementById('tagline').textContent = config.tagline || defaultConfig.tagline;
+    }
+    
+    function mapToCapabilities(cfg) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+    
+    function mapToEditPanelValues(cfg) {
+      return new Map([
+        ['store_name', cfg.store_name || defaultConfig.store_name],
+        ['tagline', cfg.tagline || defaultConfig.tagline]
+      ]);
+    }
+    
+    // Initialize
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+    
+    // Initial render
+    renderProducts();
+    updateTotals();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f1a03f905a26ca8',t:'MTc3NzA4NTE2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
