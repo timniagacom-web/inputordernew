@@ -254,6 +254,15 @@
     // Product Database
     const products = [
       {
+        id: 'biji-nangka',
+        name: 'Biji Nangka',
+        description: 'Kue tradisional Bugis Makassar',
+        price: 60000,
+        image: 'https://i.imgur.com/JEe0WZG.png',
+        aliases: ['biji nangka', 'biji', 'nangka', 'bij nangka', 'bininangka'],
+        group: 'biji-nangka'
+      },
+      {
         id: 'kadoppe-durian',
         name: 'Kadoppe DURIAN',
         description: 'Kue dengan rasa durian premium',
@@ -364,6 +373,14 @@
     let selectedStatus = '';
     
     // Price calculation functions
+    function calculateBijiNangkaPrice(qty) {
+      if (qty === 0) return 0;
+      if (qty === 1) return 60000;
+      if (qty === 2) return 99000;
+      if (qty >= 3) return qty * 49500;
+      return qty * 49500;
+    }
+    
     function calculateKadoppeDurianPrice(qty) {
       if (qty === 0) return 0;
       if (qty === 1) return 60000;
@@ -445,6 +462,7 @@
     function calculateSubtotal() {
       let subtotal = 0;
       
+      const bijiNangkaQty = cart['biji-nangka'] || 0;
       const kadoppeDurianQty = cart['kadoppe-durian'] || 0;
       const sikaporoDurianQty = cart['sikaporo-durian'] || 0;
       const katirisalaQty = cart['katirisala'] || 0;
@@ -452,6 +470,7 @@
       const talamBQty = cart['talam-b'] || 0;
       
       // Calculate each product individually without bundling
+      if (bijiNangkaQty > 0) subtotal += calculateBijiNangkaPrice(bijiNangkaQty);
       if (kadoppeDurianQty > 0) subtotal += calculateKadoppeDurianPrice(kadoppeDurianQty);
       if (sikaporoDurianQty > 0) subtotal += calculateSikaporoDurianPrice(sikaporoDurianQty);
       if (katirisalaQty > 0) subtotal += calculateKatirisalaPrice(katirisalaQty);
@@ -476,6 +495,8 @@
       if (qty === 0) return 0;
       
       switch(productId) {
+        case 'biji-nangka':
+          return Math.round(calculateBijiNangkaPrice(qty) / qty);
         case 'kadoppe-durian':
           return Math.round(calculateKadoppeDurianPrice(qty) / qty);
         case 'sikaporo-durian':
@@ -1106,6 +1127,14 @@
       // Build product lines
       let productLines = [];
       
+      // Biji Nangka
+      const bijiNangkaQty = cart['biji-nangka'] || 0;
+      if (bijiNangkaQty > 0) {
+        const price = calculateBijiNangkaPrice(bijiNangkaQty);
+        productLines.push(`- Biji Nangka: ${bijiNangkaQty}`);
+        productLines.push(`Harga: ${formatRupiah(price)}`);
+      }
+      
       // Kadoppe Durian
       const kadoppeDurianQty = cart['kadoppe-durian'] || 0;
       if (kadoppeDurianQty > 0) {
@@ -1382,5 +1411,5 @@ Maps: ${customerData.maps || '-'}`;
     renderProducts();
     updateTotals();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f1a03f905a26ca8',t:'MTc3NzA4NTE2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f6dbd1d34befd1f',t:'MTc3Nzk2MzA2OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
