@@ -344,10 +344,28 @@
         group: 'talam-b'
       },
       {
+        id: 'klapertart-sf',
+        name: 'Klapertart - Sugar Free',
+        description: '1 box isi 6 pcs',
+        price: 60000,
+        image: 'https://i.imgur.com/m5SJWr5.jpeg',
+        aliases: ['klapertart', 'klapertart sugar free', 'klapertart sf', 'klapertart tanpa gula', 'klaper', 'klaper sugar free', 'klapertart sf', 'klaper sf'],
+        group: 'klapertart-sf'
+      },
+      {
+        id: 'klapertart-sf-duplicate',
+        name: 'Klapertart - Sugar Free',
+        description: '1 box isi 6 pcs',
+        price: 60000,
+        image: 'https://i.imgur.com/m5SJWr5.jpeg',
+        aliases: ['klapertart', 'klapertart sugar free', 'klapertart sf', 'klapertart tanpa gula', 'klaper', 'klaper sugar free'],
+        group: 'klapertart-sf'
+      },
+      {
         id: 'ube-lava',
         name: 'Ube Lava - Gluten Free',
         description: '1 box isi 6 cup',
-        price: 55000,
+        price: 60000,
         image: 'https://i.imgur.com/7FMKl8H.jpeg',
         aliases: ['ube lava', 'ube', 'lava ube', 'lumpur surga ubi', 'lumpur ubi', 'lumpur surga ubi ungu', 'ube lava cake', 'ubelava'],
         group: 'lava',
@@ -357,7 +375,7 @@
         id: 'pumpkin-lava',
         name: 'Pumpkin Lava - Gluten Free',
         description: '1 box isi 6 cup',
-        price: 55000,
+        price: 60000,
         image: 'https://i.imgur.com/7FMKl8H.jpeg',
         aliases: ['pumpkin lava', 'pumpkin', 'lava pumpkin', 'labu', 'lumpur surga labu', 'lumpur labu', 'lumpur surga labu kuning', 'pumpkin lava cake', 'pumpkinlava'],
         group: 'lava',
@@ -367,7 +385,7 @@
         id: 'choco-lava',
         name: 'Choco Lava - Gluten Free',
         description: '1 box isi 6 cup',
-        price: 58000,
+        price: 60000,
         image: 'https://i.imgur.com/7FMKl8H.jpeg',
         aliases: ['choco lava', 'chocolate lava', 'coklat lava', 'lava coklat', 'choco', 'choco lava cake', 'chocolate lava cake', 'chocolava', 'chcolava'],
         group: 'lava',
@@ -411,10 +429,10 @@
     // Price calculation functions
     function calculateBijiNangkaPrice(qty) {
       if (qty === 0) return 0;
-      if (qty === 1) return 60000;
-      if (qty === 2) return 109000;
-      if (qty >= 3) return qty * 54600;
-      return qty * 54600;
+      if (qty === 1) return 65000;
+      if (qty === 2) return 119000;
+      if (qty >= 3) return qty * 59500;
+      return qty * 59500;
     }
     
     function calculateKadoppeDurianPrice(qty) {
@@ -461,30 +479,12 @@
       const pumpkinQty = cart['pumpkin-lava'] || 0;
       const chocoQty = cart['choco-lava'] || 0;
       
-      const nonChocoQty = ubeQty + pumpkinQty;
-      const totalLava = nonChocoQty + chocoQty;
+      const totalLava = ubeQty + pumpkinQty + chocoQty;
       
       if (totalLava === 0) return 0;
       
-      // 3 or more: wholesale price
-      if (totalLava >= 3) {
-        return (nonChocoQty * 44500) + (chocoQty * 54500);
-      }
-      
-      // 2 items
-      if (totalLava === 2) {
-        if (chocoQty === 2) return 109000;
-        if (chocoQty === 1 && nonChocoQty === 1) return 99000;
-        if (nonChocoQty === 2) return 89000;
-      }
-      
-      // 1 item
-      if (totalLava === 1) {
-        if (chocoQty === 1) return 58000;
-        return 55000;
-      }
-      
-      return 0;
+      // All lava products now 60k per box, no bundling promos
+      return totalLava * 60000;
     }
     
     function calculateSpaghettiPersonalPrice(qty) {
@@ -550,13 +550,8 @@
         case 'ube-lava':
         case 'pumpkin-lava':
         case 'choco-lava':
-          // For lava cakes, calculate based on total bundle
-          const totalLava = (cart['ube-lava'] || 0) + (cart['pumpkin-lava'] || 0) + (cart['choco-lava'] || 0);
-          if (totalLava >= 3) {
-            return productId === 'choco-lava' ? 54500 : 44500;
-          }
-          const totalPrice = calculateLavaPrice();
-          return Math.round(totalPrice / totalLava);
+          // All lava cakes now flat 60k per box
+          return 60000;
         default:
           return 0;
       }
@@ -1447,5 +1442,5 @@ Maps: ${customerData.maps || '-'}`;
     renderProducts();
     updateTotals();
   </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f755c7b36185037',t:'MTc3ODA0Mjk5Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9fc6aa100277fd94',t:'MTc3ODg5NTUyMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
